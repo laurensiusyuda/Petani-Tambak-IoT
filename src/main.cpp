@@ -24,6 +24,7 @@
 #define mqqt_port 1883
 #define salinity_topic "topicName/salt"
 #define temperature_topic "topicName/temperature"
+#define ph_topic "topicName/ph"
 
 WiFiClient espClient;
 OneWire oneWire(ONE_WIRE_BUS);
@@ -220,6 +221,7 @@ void loop()
   client.loop();
   client.publish(temperature_topic, String(nilai_suhu).c_str(), true);
   client.publish(salinity_topic, String(nilai_salinitas).c_str(), true);
+  client.publish(ph_topic, String(nilai_pH).c_str(), true);
 
   lcd.clear();
   lcd.setCursor(0, 0);
