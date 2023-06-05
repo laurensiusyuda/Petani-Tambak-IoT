@@ -187,26 +187,21 @@ unsigned char suhuRendah()
   {
     suhu_rendah = (24 - baca_suhu()) / (24 - 22);
   }
-  else if (baca_suhu() > 24)
+  else if (baca_suhu() >= 24)
   {
     suhu_rendah = 0;
   }
   return suhu_rendah;
 }
-
 unsigned char suhuSejuk()
 {
-  if (baca_suhu() <= 22)
+  if (baca_suhu() <= 24)
   {
     suhu_sedang = 0;
   }
-  else if (baca_suhu() >= 22 && baca_suhu() <= 24)
-  {
-    suhu_sedang = (baca_suhu() - 22) / (24 - 22);
-  }
   else if (baca_suhu() >= 24 && baca_suhu() <= 26)
   {
-    suhu_sedang = 1;
+    suhu_sedang = (baca_suhu() - 24) / (26 - 24);
   }
   else if (baca_suhu() >= 26 && baca_suhu() <= 30)
   {
@@ -218,7 +213,6 @@ unsigned char suhuSejuk()
   }
   return suhu_sedang;
 }
-
 unsigned char suhuPanas()
 {
   if (baca_suhu() <= 26)
@@ -239,7 +233,7 @@ unsigned char suhuPanas()
 // fuzzyfikasi sensor salinitas
 unsigned char salinitasTawar()
 {
-  if (baca_salinitas() <= 25)
+  if (baca_salinitas() <= 20)
   {
     salinitas_tawar = 1;
   }
@@ -253,31 +247,29 @@ unsigned char salinitasTawar()
   }
   return salinitas_tawar;
 }
-
 unsigned char salinitasPayau()
 {
-  if (baca_salinitas() <= 20)
+  if (baca_salinitas() <= 25)
   {
     salinitas_payau = 0;
   }
-  else if (baca_salinitas() >= 20 && baca_salinitas() <= 25)
-  {
-    salinitas_payau = (baca_salinitas() - 20) / (25 - 20);
-  }
   else if (baca_salinitas() >= 25 && baca_salinitas() <= 28)
   {
-    salinitas_payau = 1;
+    salinitas_payau = (baca_salinitas() - 25) / (28 - 25);
   }
-  else if (baca_salinitas() >= 25)
+  else if (baca_salinitas() >= 28 && baca_salinitas() <= 30)
+  {
+    salinitas_payau = (30 - baca_salinitas()) / (30 - 28);
+  }
+  else if (baca_salinitas() >= 30)
   {
     salinitas_payau = 0;
   }
   return salinitas_payau;
 }
-
 unsigned char salinitasAsin()
 {
-  if (baca_salinitas() <= 25)
+  if (baca_salinitas() <= 28)
   {
     salinitas_asin = 0;
   }
@@ -301,7 +293,7 @@ unsigned char phAsam()
   }
   else if (baca_pH() >= 6.5 && baca_pH() <= 7)
   {
-    ph_asam = (baca_pH() - 6.5) / (25 - 20);
+    ph_asam = (7 - baca_pH()) / (7 - 6.5);
   }
   else if (baca_pH() >= 7)
   {
@@ -321,9 +313,9 @@ unsigned char phNormal()
   }
   else if (baca_pH() >= 7 && baca_pH() <= 8)
   {
-    ph_netral = 1;
+    ph_netral = (8 - baca_pH()) / (8 - 7);
   }
-  else if (baca_pH() >= 9)
+  else if (baca_pH() >= 8)
   {
     ph_netral = 0;
   }
@@ -335,7 +327,7 @@ unsigned char phBasa()
   {
     ph_asam = 0;
   }
-  else if (baca_pH() >= 6.5 && baca_pH() <= 9)
+  else if (baca_pH() >= 8 && baca_pH() <= 9)
   {
     ph_asam = (baca_pH() - 8) / (8 - 9);
   }
@@ -345,6 +337,7 @@ unsigned char phBasa()
   }
   return ph_asam;
 }
+
 // membuat fungsi void fuzzyfikasi
 void fuzzyfikasi()
 {
@@ -376,7 +369,7 @@ float Min(float a, float b, float c)
   }
 }
 
-// komposisi aturan
+// aplikasi fungsi implikasi
 void rule()
 {
   fuzzyfikasi();
@@ -435,6 +428,16 @@ void rule()
   Rule[25] = minr[25];
   Rule[26] = minr[26];
 }
+
+// komposisi aturan
+
+float aircukup[5] = {
+    Rule[4],
+    Rule[10],
+    Rule[12],
+    Rule[14],
+    Rule[22],
+};
 
 void loop()
 {
