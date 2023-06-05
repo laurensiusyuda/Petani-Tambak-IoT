@@ -41,6 +41,15 @@ float suhu_rendah;
 float suhu_sedang;
 float suhu_tinggi;
 
+float salinitas_tawar;
+float salinitas_payau;
+float salinitas_asin;
+
+float ph_asam;
+float ph_netral;
+float ph_basa;
+
+// membuat fungsi untuk koneksi menuju wifi
 void setup_wifi()
 {
   delay(10);
@@ -59,6 +68,7 @@ void setup_wifi()
   Serial.println(WiFi.localIP());
 }
 
+// membuat fungsi untuk koneksi ulang jika wifi mengalamai ganguan
 void reconnect()
 {
   while (!client.connected())
@@ -96,6 +106,7 @@ void setup()
   pinMode(pin_pH, OUTPUT);
 }
 
+// membuat fungsi untuk membaca sensor suhu
 float baca_suhu()
 {
   sensors.requestTemperatures();
@@ -103,6 +114,7 @@ float baca_suhu()
   return tempC;
 }
 
+// membuat fungsi untuk membaca sensor salinitas
 float baca_salinitas()
 {
   digitalWrite(pin_Salinitas, HIGH);
@@ -132,6 +144,7 @@ float baca_salinitas()
   return salt;
 }
 
+// membuat fungsi untuk membaca sensor pH
 float baca_pH()
 {
   digitalWrite(pin_pH, HIGH);
@@ -161,6 +174,7 @@ float baca_pH()
   return phValue;
 }
 
+// fuzyfikasi sensor suhu
 unsigned char suhuRendah()
 {
   if (baca_suhu() <= 22)
@@ -169,7 +183,7 @@ unsigned char suhuRendah()
   }
   else if (baca_suhu() >= 22 && baca_suhu() <= 24)
   {
-    suhu_rendah = (baca_suhu() - 22) / (24 - 22);
+    suhu_rendah = (24 - baca_suhu()) / (24 - 22);
   }
   else if (baca_suhu() > 24)
   {
@@ -180,7 +194,11 @@ unsigned char suhuRendah()
 
 unsigned char suhuSejuk()
 {
-  if (baca_suhu() >= 22 && baca_suhu() <= 24)
+  if (baca_suhu() <= 22)
+  {
+    suhu_sedang = 0;
+  }
+  else if (baca_suhu() >= 22 && baca_suhu() <= 24)
   {
     suhu_sedang = (baca_suhu() - 22) / (24 - 22);
   }
@@ -192,20 +210,152 @@ unsigned char suhuSejuk()
   {
     suhu_sedang = (30 - baca_suhu()) / (30 - 26);
   }
+  else if (baca_suhu() >= 30)
+  {
+    suhu_sedang = 0;
+  }
   return suhu_sedang;
 }
 
 unsigned char suhuDingin()
 {
-  if (baca_suhu() >= 26 && baca_suhu() <= 30)
+  if (baca_suhu() <= 26)
+  {
+    suhu_tinggi = 0;
+  }
+  else if (baca_suhu() >= 26 && baca_suhu() <= 30)
   {
     suhu_tinggi = (baca_suhu() - 26) / (30 - 26);
   }
-  else if (baca_suhu() > 30)
+  else if (baca_suhu() >= 30)
   {
     suhu_tinggi = 1;
   }
   return suhu_tinggi;
+}
+
+// fuzzyfikasi sensor salinitas
+unsigned char salinitasTawar()
+{
+  if (baca_salinitas() <= 25)
+  {
+    salinitas_tawar = 1;
+  }
+  else if (baca_salinitas() >= 20 && baca_salinitas() <= 25)
+  {
+    salinitas_tawar = (25 - baca_salinitas()) / (25 - 20);
+  }
+  else if (baca_salinitas() >= 25)
+  {
+    salinitas_tawar = 0;
+  }
+  return salinitas_tawar;
+}
+
+unsigned char salinitasPayau()
+{
+  if (baca_salinitas() <= 20)
+  {
+    salinitas_payau = 0;
+  }
+  else if (baca_salinitas() >= 20 && baca_salinitas() <= 25)
+  {
+    salinitas_payau = (baca_salinitas() - 20) / (25 - 20);
+  }
+  else if (baca_salinitas() >= 25 && baca_salinitas() <= 28)
+  {
+    salinitas_payau = 1;
+  }
+  else if (baca_salinitas() >= 25)
+  {
+    salinitas_payau = 0;
+  }
+}
+
+unsigned char salinitasAsin()
+{
+  if (baca_salinitas() <= 25)
+  {
+    salinitas_asin = 0;
+  }
+  else if (baca_salinitas() >= 28 && baca_salinitas() <= 30)
+  {
+    salinitas_asin = (baca_salinitas() - 28) / (30 - 28);
+  }
+  else if (baca_salinitas() >= 30)
+  {
+    salinitas_asin = 1;
+  }
+}
+
+// fuzzyfikasi sensor pH
+unsigned char phAsam()
+{
+  if (baca_pH() <= 6.5)
+  {
+    ph_asam = 1;
+  }
+  else if (baca_pH() >= 6.5 && baca_pH() <= 7)
+  {
+    ph_asam = (baca_pH() - 6.5) / (25 - 20);
+  }
+  else if (baca_pH() >= 7)
+  {
+    ph_asam = 0;
+  }
+  return ph_asam;
+}
+unsigned char phNormal()
+{
+  if (baca_pH() <= 6.5)
+  {
+    salinitas_payau = 0;
+  }
+  else if (baca_pH() >= 6.5 && baca_pH() <= 7)
+  {
+    salinitas_payau = (baca_pH() - 6.5) / (7 - 6.5);
+  }
+  else if (baca_pH() >= 7 && baca_pH() <= 8)
+  {
+    salinitas_payau = 1;
+  }
+  else if (baca_pH() >= 9)
+  {
+    salinitas_payau = 0;
+  }
+}
+unsigned char phBasa()
+{
+  if (baca_pH() <= 8)
+  {
+    ph_asam = 0;
+  }
+  else if (baca_pH() >= 6.5 && baca_pH() <= 9)
+  {
+    ph_asam = (baca_pH() - 8) / (8 - 9);
+  }
+  else if (baca_pH() >= 9)
+  {
+    ph_asam = 1;
+  }
+  return ph_asam;
+}
+
+// membuat fungsi min
+float Min(float a, float b, float c)
+{
+  if (a <= b && a <= c)
+  {
+    return a;
+  }
+  else if (b <= a && b <= c)
+  {
+    return b;
+  }
+  else
+  {
+    return c;
+  }
 }
 
 void loop()
