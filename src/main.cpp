@@ -51,6 +51,10 @@ float ph_asam;
 float ph_netral;
 float ph_basa;
 
+float maxairburuk;
+float maxaircukup;
+float maxairbersih;
+
 // membuat fungsi untuk koneksi menuju wifi
 void setup_wifi()
 {
@@ -108,15 +112,13 @@ void setup()
   pinMode(pin_pH, OUTPUT);
 }
 
-// membuat fungsi untuk membaca sensor suhu
+// membuat fungsi untuk membaca sensor
 float baca_suhu()
 {
   sensors.requestTemperatures();
   float tempC = sensors.getTempCByIndex(0);
   return tempC;
 }
-
-// membuat fungsi untuk membaca sensor salinitas
 float baca_salinitas()
 {
   digitalWrite(pin_Salinitas, HIGH);
@@ -145,8 +147,6 @@ float baca_salinitas()
   float salt = (139.6803 + nilaiADCSalinitas) / 16.9394;
   return salt;
 }
-
-// membuat fungsi untuk membaca sensor pH
 float baca_pH()
 {
   digitalWrite(pin_pH, HIGH);
@@ -195,13 +195,17 @@ unsigned char suhuRendah()
 }
 unsigned char suhuSejuk()
 {
-  if (baca_suhu() <= 24)
+  if (baca_suhu() <= 22)
   {
     suhu_sedang = 0;
   }
+  else if (baca_suhu() >= 22 && baca_suhu() <= 24)
+  {
+    suhu_sedang = (baca_suhu() - 22) / (24 - 22);
+  }
   else if (baca_suhu() >= 24 && baca_suhu() <= 26)
   {
-    suhu_sedang = (baca_suhu() - 24) / (26 - 24);
+    suhu_sedang = 1;
   }
   else if (baca_suhu() >= 26 && baca_suhu() <= 30)
   {
@@ -249,13 +253,17 @@ unsigned char salinitasTawar()
 }
 unsigned char salinitasPayau()
 {
-  if (baca_salinitas() <= 25)
+  if (baca_salinitas() <= 20)
   {
     salinitas_payau = 0;
   }
+  else if (baca_salinitas() >= 20 && baca_salinitas() <= 25)
+  {
+    salinitas_payau = (baca_salinitas() - 20) / (25 - 20);
+  }
   else if (baca_salinitas() >= 25 && baca_salinitas() <= 28)
   {
-    salinitas_payau = (baca_salinitas() - 25) / (28 - 25);
+    salinitas_payau = 1;
   }
   else if (baca_salinitas() >= 28 && baca_salinitas() <= 30)
   {
@@ -313,7 +321,11 @@ unsigned char phNormal()
   }
   else if (baca_pH() >= 7 && baca_pH() <= 8)
   {
-    ph_netral = (8 - baca_pH()) / (8 - 7);
+    ph_netral = 1;
+  }
+  else if (baca_pH() >= 8 && baca_pH() <= 9)
+  {
+    ph_netral = (9 - baca_pH()) / (9 - 8);
   }
   else if (baca_pH() >= 8)
   {
@@ -369,7 +381,7 @@ float Min(float a, float b, float c)
   }
 }
 
-// aplikasi fungsi implikasi
+// aplikasi fungsi inferensi
 void rule()
 {
   fuzzyfikasi();
@@ -430,14 +442,133 @@ void rule()
 }
 
 // komposisi aturan
+float *get_max()
+{
+  rule();
+  static float maxValues[3];
 
-float aircukup[5] = {
-    Rule[4],
-    Rule[10],
-    Rule[12],
-    Rule[14],
-    Rule[22],
+  float aircukup[5] = {
+      Rule[4],
+      Rule[10],
+      Rule[12],
+      Rule[14],
+      Rule[22],
+  };
+
+  float airburuk[21] = {
+      Rule[0],
+      Rule[1],
+      Rule[2],
+      Rule[3],
+      Rule[5],
+      Rule[6],
+      Rule[7],
+      Rule[8],
+      Rule[9],
+      Rule[11],
+      Rule[15],
+      Rule[16],
+      Rule[17],
+      Rule[18],
+      Rule[19],
+      Rule[20],
+      Rule[21],
+      Rule[24],
+      Rule[25],
+      Rule[26],
+  };
+
+  float maxaircukup = aircukup[0];
+  for (int i = 0; i < 5; i++)
+  {
+    if (aircukup[i] > maxaircukup)
+    {
+      maxaircukup = aircukup[i];
+    }
+  }
+  float maxairburuk = airburuk[0];
+  for (int i = 0; i < 21; i++)
+  {
+    if (airburuk[i] > maxairburuk)
+    {
+      maxairburuk = airburuk[i];
+    }
+  }
+  float maxairbersih = Rule[13];
+
+  maxValues[0] = maxairburuk;
+  maxValues[1] = maxaircukup;
+  maxValues[2] = maxairbersih;
+
+  return maxValues;
+}
+
+// hitung batas area fuzzyfikasi
+struct getvaluesarea
+{
+  float z1;
+  float z2;
+  float z1Temp;
+  float z2Temp;
 };
+
+getvaluesarea get_area()
+{
+  float *maxValues = get_max();
+  maxairburuk = maxValues[0];
+  maxaircukup = maxValues[1];
+  maxairbersih = maxValues[2];
+
+  float z1Temp = 0.0;
+  float z2Temp = 0.0;
+  float z1 = 0.0;
+  float z2 = 0.0;
+
+  float airbersihmin = 18;
+  float airbersihmax = 30;
+  float aircukupmin = 0;
+  float aircukupmax = 30;
+  float airkotormin = 0;
+  float airkotormax = 17;
+
+  if (maxairbersih == 1)
+  {
+    z1 = maxairbersih * (airbersihmax - airbersihmin) + airbersihmin;
+    z2 = 0;
+  }
+  else if (maxaircukup == 1)
+  {
+    z1 = maxaircukup * (aircukupmax - aircukupmin) + aircukupmin;
+    z2 = 0;
+  }
+  else if (maxairburuk == 1)
+  {
+    z1 = maxairburuk * (airkotormax - airkotormin) + airkotormin;
+    z2 = 0;
+  }
+
+  else if ((maxairbersih > 0 && maxaircukup > 0) || maxairbersih > 0)
+  {
+    z1Temp = maxairbersih * (airbersihmax - airbersihmin) + airbersihmin;
+    z2Temp = maxaircukup * (aircukupmax - aircukupmin) + aircukupmin;
+    z1 = min(z1Temp, z2Temp);
+    z2 = max(z1Temp, z2Temp);
+  }
+  else if ((maxaircukup > 0 && maxairburuk > 0) || maxaircukup > 0)
+  {
+    z1Temp = maxaircukup * (aircukupmax - aircukupmin) + aircukupmin;
+    z2Temp = maxairburuk * (airkotormax - airkotormin) + airkotormin;
+    z1 = min(z1Temp, z2Temp);
+    z2 = max(z1Temp, z2Temp);
+  }
+  getvaluesarea fuzzy;
+  fuzzy.z1 = z1;
+  fuzzy.z2 = z2;
+  fuzzy.z1Temp = z1Temp;
+  fuzzy.z2Temp = z2Temp;
+
+  return fuzzy;
+}
 
 void loop()
 {
